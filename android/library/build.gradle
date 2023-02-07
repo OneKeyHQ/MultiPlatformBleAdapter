@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
 
-group='com.github.MY01Inc'
+group='com.github.OnekeyHQ'
 
 buildscript {
     repositories {
@@ -10,7 +10,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.3'
+        classpath 'com.android.tools.build:gradle:7.3.1'
     }
 }
 
@@ -45,7 +45,7 @@ android {
 publishing {
         publications {
             release(MavenPublication) {
-                groupId 'com.github.MY01Inc'
+                groupId 'com.github.OnekeyHQ'
                 artifactId 'MultiPlatformBleAdapter'
                 version '1.0.0'
                 afterEvaluate{
