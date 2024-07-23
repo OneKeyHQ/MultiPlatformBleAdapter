@@ -1466,6 +1466,10 @@ public class BleModule implements BleAdapter {
                     NotificationSetupMode setupMode = cccDescriptor != null
                             ? NotificationSetupMode.QUICK_SETUP
                             : NotificationSetupMode.COMPAT;
+
+                    android.util.Log.d("BLEModule ===>>> ", "safeMonitorCharacteristicForDevice1: getId:"+characteristic.getId()+" getUuid:"+characteristic.getUuid().toString());
+                    android.util.Log.d("BLEModule ===>>> ", "safeMonitorCharacteristicForDevice2: getServiceID:"+characteristic.getServiceID()+" getServiceUUID:"+characteristic.getServiceUUID().toString());
+
                     if (characteristic.isNotifiable()) {
                         return connection.setupNotification(characteristic.gattCharacteristic, setupMode);
                     }
