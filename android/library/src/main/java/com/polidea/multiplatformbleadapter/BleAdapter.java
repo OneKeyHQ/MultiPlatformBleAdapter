@@ -86,6 +86,17 @@ public interface BleAdapter {
             OnSuccessCallback<Device> onSuccessCallback,
             OnErrorCallback onErrorCallback);
 
+    void discoverAllServicesAndCharacteristicsForDevice(
+            String deviceIdentifier,
+            String transactionId,
+            Boolean forceUpdate,
+            OnSuccessCallback<Device> onSuccessCallback,
+            OnErrorCallback onErrorCallback);
+
+    void refreshGatt(String deviceIdentifier,
+                        OnSuccessCallback<Boolean> onSuccessCallback,
+                        OnErrorCallback onErrorCallback);
+
     List<Service> getServicesForDevice(
             String deviceIdentifier) throws BleError;
 
