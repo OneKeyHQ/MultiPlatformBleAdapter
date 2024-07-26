@@ -57,7 +57,7 @@ publishing {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "com.polidea.rxandroidble2:rxandroidble:1.15.1"
+    implementation 'com.github.ByteZhang1024:RxAndroidBle:da95ec607d'
     testImplementation 'junit:junit:4.12'
 }
 

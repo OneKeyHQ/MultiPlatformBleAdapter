@@ -470,9 +470,27 @@ public class BleModule implements BleAdapter {
         onSuccessCallback.onSuccess(connected);
     }
 
+    public void refreshGatt(String deviceIdentifier, OnSuccessCallback<Boolean> onSuccessCallback,
+                            OnErrorCallback onErrorCallback) {
+        final Device device;
+        try {
+            device = getDeviceById(deviceIdentifier);
+            final RxBleConnection connection = getConnectionOrEmitError(device.getId(), onErrorCallback);
+            if (connection == null) {
+                onSuccessCallback.onSuccess(false);
+                return;
+            }
+            Boolean result = connection.refreshGatt();
+            onSuccessCallback.onSuccess(result);
+        } catch (BleError error) {
+            onSuccessCallback.onSuccess(false);
+        }
+    }
+
     @Override
     public void discoverAllServicesAndCharacteristicsForDevice(String deviceIdentifier,
                                                                String transactionId,
+                                                               Boolean clearCache,
                                                                OnSuccessCallback<Device> onSuccessCallback,
                                                                OnErrorCallback onErrorCallback) {
         final Device device;
@@ -483,7 +501,15 @@ public class BleModule implements BleAdapter {
             return;
         }
 
-        safeDiscoverAllServicesAndCharacteristicsForDevice(device, transactionId, onSuccessCallback, onErrorCallback);
+        safeDiscoverAllServicesAndCharacteristicsForDevice(device, transactionId, clearCache, onSuccessCallback, onErrorCallback);
+    }
+
+    @Override
+    public void discoverAllServicesAndCharacteristicsForDevice(String deviceIdentifier,
+                                                               String transactionId,
+                                                               OnSuccessCallback<Device> onSuccessCallback,
+                                                               OnErrorCallback onErrorCallback) {
+        this.discoverAllServicesAndCharacteristicsForDevice(deviceIdentifier, transactionId, false, onSuccessCallback, onErrorCallback);
     }
 
     @Override
@@ -1248,7 +1274,7 @@ public class BleModule implements BleAdapter {
         }
 
         if (timeout != null) {
-            connect = connect.timeout(Observable.timer(timeout, TimeUnit.MILLISECONDS),rxBleConnection -> Observable.never());
+            connect = connect.timeout(Observable.timer(timeout, TimeUnit.MILLISECONDS), rxBleConnection -> Observable.never());
         }
 
 
@@ -1266,7 +1292,7 @@ public class BleModule implements BleAdapter {
 
             @Override
             public void onNext(RxBleConnection connection) {
-                Device localDevice = rxBleDeviceToDeviceMapper.map(device,connection);
+                Device localDevice = rxBleDeviceToDeviceMapper.map(device, connection);
                 onConnectionStateChangedCallback.onEvent(ConnectionState.CONNECTED);
                 cleanServicesAndCharacteristicsForDevice(localDevice);
                 connectedDevices.put(device.getMacAddress(), localDevice);
@@ -1292,6 +1318,7 @@ public class BleModule implements BleAdapter {
 
     private void safeDiscoverAllServicesAndCharacteristicsForDevice(final Device device,
                                                                     final String transactionId,
+                                                                    final Boolean clearCache,
                                                                     final OnSuccessCallback<Device> onSuccessCallback,
                                                                     final OnErrorCallback onErrorCallback) {
         final RxBleConnection connection = getConnectionOrEmitError(device.getId(), onErrorCallback);
@@ -1302,7 +1329,7 @@ public class BleModule implements BleAdapter {
         final SafeExecutor<Device> safeExecutor = new SafeExecutor<>(onSuccessCallback, onErrorCallback);
 
         final Single<RxBleDeviceServices> subscription = connection
-                .discoverServices()
+                .discoverServices(20L, TimeUnit.SECONDS, clearCache)
                 .doFinally(() -> {
                     safeExecutor.error(BleErrorUtils.cancelled());
                     pendingTransactions.removeDisposable(transactionId);
@@ -1341,6 +1368,13 @@ public class BleModule implements BleAdapter {
         subscription.subscribe(observer);
 
         pendingTransactions.replaceDisposable(transactionId, observer);
+    }
+
+    private void safeDiscoverAllServicesAndCharacteristicsForDevice(final Device device,
+                                                                    final String transactionId,
+                                                                    final OnSuccessCallback<Device> onSuccessCallback,
+                                                                    final OnErrorCallback onErrorCallback) {
+        this.safeDiscoverAllServicesAndCharacteristicsForDevice(device, transactionId, false, onSuccessCallback, onErrorCallback);
     }
 
     private void safeReadCharacteristicForDevice(final Characteristic characteristic,
